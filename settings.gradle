@@ -1,1 +1,1 @@
-include ':core', ':network', 'main', ':opensource'
+include ':core', ':network', 'main', ':opensource', ':jetpack'

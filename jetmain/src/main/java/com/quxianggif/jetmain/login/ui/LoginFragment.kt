@@ -1,4 +1,4 @@
-package com.quxianggif.login.ui
+package com.quxianggif.jetmain.login.ui
 
 import android.view.View
 import androidx.navigation.NavController
@@ -6,13 +6,13 @@ import androidx.navigation.NavDirections
 import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
 import com.quxianggif.R
-import com.quxianggif.core.GifFun
 import com.quxianggif.core.util.AndroidVersion
 import com.quxianggif.core.util.GlobalUtil
 import com.quxianggif.event.FinishActivityEvent
 import com.quxianggif.event.MessageEvent
-import com.quxianggif.feeds.ui.MainFragment
-import com.quxianggif.router.RouterManager
+import com.quxianggif.jetmain.feeds.ui.MainFragment
+import com.quxianggif.login.ui.LoginActivity
+import com.quxianggif.jetmain.router.RouterManager
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 

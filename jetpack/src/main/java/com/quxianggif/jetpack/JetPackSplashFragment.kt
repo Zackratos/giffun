@@ -4,7 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.quxianggif.init.ui.SplashFragment
+import com.quxianggif.jetmain.init.ui.SplashFragment
 import com.quxianggif.jetpack.databinding.FragmentSplashBinding
 
 /**

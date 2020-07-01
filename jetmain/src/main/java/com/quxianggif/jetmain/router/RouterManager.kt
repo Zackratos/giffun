@@ -1,8 +1,6 @@
-package com.quxianggif.router
+package com.quxianggif.jetmain.router
 
-import androidx.fragment.app.Fragment
 import androidx.navigation.NavDirections
-import com.quxianggif.core.model.Version
 
 /**
  * Author   : zhangwenchao

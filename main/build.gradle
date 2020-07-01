@@ -1,8 +1,6 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
-apply plugin: 'kotlin-kapt'
-apply plugin: 'androidx.navigation.safeargs.kotlin'
 
 android {
 
@@ -18,9 +16,6 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
-    }
-    dataBinding {
-        enabled = true
     }
 
 }
@@ -47,7 +42,4 @@ dependencies {
     api 'com.umeng.umsdk:analytics:7.5.4'
     api 'com.umeng.umsdk:common:1.5.4'
     testImplementation 'junit:junit:4.12'
-
-    api "androidx.navigation:navigation-fragment-ktx:2.1.0"
-    api "androidx.navigation:navigation-ui-ktx:2.1.0"
 }

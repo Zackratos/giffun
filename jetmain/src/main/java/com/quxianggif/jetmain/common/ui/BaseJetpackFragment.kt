@@ -1,20 +1,17 @@
-package com.quxianggif.common.ui
+package com.quxianggif.jetmain.common.ui
 
-import android.app.ProgressDialog
-import android.content.Context
 import android.os.Bundle
 import android.view.View
-import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.quxianggif.R
-import com.quxianggif.core.extension.logWarn
+import com.quxianggif.common.ui.BaseActivity
+import com.quxianggif.common.ui.BaseFragment
 import com.quxianggif.event.ForceToLoginEvent
 import com.quxianggif.event.MessageEvent
-import com.quxianggif.login.ui.LoginFragment
-import com.quxianggif.router.RouterManager
-import com.umeng.analytics.MobclickAgent
+import com.quxianggif.jetmain.login.ui.LoginFragment
+import com.quxianggif.jetmain.router.RouterManager
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode

@@ -26,7 +26,7 @@
 
     <fragment
         android:id="@+id/main_fragment"
-        android:name="com.quxianggif.feeds.ui.MainFragment"
+        android:name="com.quxianggif.jetmain.feeds.ui.MainFragment"
         tools:layout="@layout/fragment_main">
 
     </fragment>

@@ -1,11 +1,11 @@
-package com.quxianggif.init.ui
+package com.quxianggif.jetmain.init.ui
 
 import android.os.Bundle
 import android.text.TextUtils
 import android.view.View
 import androidx.activity.addCallback
 import androidx.navigation.fragment.findNavController
-import com.quxianggif.common.ui.BaseJetPackFragment
+import com.quxianggif.jetmain.common.ui.BaseJetPackFragment
 import com.quxianggif.core.Const
 import com.quxianggif.core.GifFun
 import com.quxianggif.core.extension.logWarn
@@ -14,12 +14,12 @@ import com.quxianggif.core.util.GlobalUtil
 import com.quxianggif.core.util.SharedUtil
 import com.quxianggif.event.FinishActivityEvent
 import com.quxianggif.event.MessageEvent
-import com.quxianggif.feeds.ui.MainFragment
-import com.quxianggif.login.ui.LoginFragment
+import com.quxianggif.jetmain.feeds.ui.MainFragment
+import com.quxianggif.jetmain.login.ui.LoginFragment
 import com.quxianggif.network.model.Init
 import com.quxianggif.network.model.OriginThreadCallback
 import com.quxianggif.network.model.Response
-import com.quxianggif.router.RouterManager
+import com.quxianggif.jetmain.router.RouterManager
 import com.quxianggif.util.ResponseHandler
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode

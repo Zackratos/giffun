@@ -13,7 +13,7 @@ import com.quxianggif.core.extension.showToast
 import com.quxianggif.core.util.AndroidVersion
 import com.quxianggif.core.util.GlobalUtil
 import com.quxianggif.jetpack.databinding.FragmentLoginBinding
-import com.quxianggif.login.ui.LoginFragment
+import com.quxianggif.jetmain.login.ui.LoginFragment
 import com.quxianggif.network.model.Callback
 import com.quxianggif.network.model.FetchVCode
 import com.quxianggif.network.model.PhoneLogin

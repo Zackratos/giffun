@@ -1,4 +1,4 @@
-package com.quxianggif.login.ui
+package com.quxianggif.jetmain.login.ui
 
 import android.os.Bundle
 import android.view.KeyEvent
@@ -14,7 +14,7 @@ import com.google.android.material.textfield.TextInputLayout
 import com.quxianggif.R
 import com.quxianggif.core.util.AndroidVersion
 import com.quxianggif.core.util.GlobalUtil
-import com.quxianggif.databinding.FragmentRegisterBinding
+import com.quxianggif.jetmain.databinding.FragmentRegisterBinding
 import kotlinx.android.synthetic.main.fragment_register.*
 
 /**

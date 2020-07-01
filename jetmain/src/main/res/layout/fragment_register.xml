@@ -8,7 +8,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/colorPrimary"
-        tools:context=".login.ui.RegisterFragment">
+        tools:context=".jetmain.login.ui.RegisterFragment">
 
         <LinearLayout
             android:layout_width="match_parent"

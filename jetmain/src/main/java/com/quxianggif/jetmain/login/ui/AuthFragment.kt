@@ -1,14 +1,14 @@
-package com.quxianggif.login.ui
+package com.quxianggif.jetmain.login.ui
 
 import androidx.navigation.fragment.findNavController
 import com.quxianggif.R
-import com.quxianggif.common.ui.BaseJetPackFragment
 import com.quxianggif.core.Const
 import com.quxianggif.core.GifFun
 import com.quxianggif.core.extension.logWarn
 import com.quxianggif.core.extension.showToast
 import com.quxianggif.core.util.GlobalUtil
 import com.quxianggif.core.util.SharedUtil
+import com.quxianggif.jetmain.common.ui.BaseJetPackFragment
 import com.quxianggif.network.model.Callback
 import com.quxianggif.network.model.GetBaseinfo
 import com.quxianggif.network.model.Response

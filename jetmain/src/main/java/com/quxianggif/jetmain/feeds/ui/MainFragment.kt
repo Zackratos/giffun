@@ -1,4 +1,4 @@
-package com.quxianggif.feeds.ui
+package com.quxianggif.jetmain.feeds.ui
 
 import android.os.Bundle
 import android.preference.PreferenceManager
@@ -13,7 +13,7 @@ import com.quxianggif.core.Const
 import com.quxianggif.core.extension.logDebug
 import com.quxianggif.core.util.GlobalUtil
 import com.quxianggif.core.util.SharedUtil
-import com.quxianggif.databinding.FragmentMainBinding
+import com.quxianggif.jetmain.databinding.FragmentMainBinding
 
 /**
  * Author   : zhangwenchao

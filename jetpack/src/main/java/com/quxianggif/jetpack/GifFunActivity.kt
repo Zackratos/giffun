@@ -1,12 +1,10 @@
 package com.quxianggif.jetpack
 
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
-import androidx.navigation.findNavController
 import com.quxianggif.common.ui.BaseActivity
-import com.quxianggif.common.ui.BaseJetPackFragment
+import com.quxianggif.jetmain.common.ui.BaseJetPackFragment
 import com.quxianggif.jetpack.databinding.ActivityGiffunBinding
 import kotlinx.android.synthetic.main.activity_giffun.*
 

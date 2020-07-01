@@ -1,37 +1,154 @@
 package com.quxianggif.jetmain.feeds.ui
 
+import android.animation.ObjectAnimator
+import android.animation.PropertyValuesHolder
 import android.os.Bundle
 import android.preference.PreferenceManager
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.text.TextUtils
+import android.view.*
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.TextView
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
+import androidx.fragment.app.FragmentPagerAdapter
 import androidx.navigation.NavController
 import androidx.navigation.NavDirections
+import androidx.palette.graphics.Palette
+import androidx.viewpager.widget.ViewPager
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.load.resource.drawable.GlideDrawable
+import com.bumptech.glide.request.RequestListener
+import com.bumptech.glide.request.target.Target
+import com.google.android.material.navigation.NavigationView
+import com.google.android.material.tabs.TabLayout
 import com.quxianggif.R
 import com.quxianggif.common.ui.BaseFragment
 import com.quxianggif.core.Const
+import com.quxianggif.core.GifFun
+import com.quxianggif.core.extension.dp2px
 import com.quxianggif.core.extension.logDebug
+import com.quxianggif.core.extension.postDelayed
+import com.quxianggif.core.extension.toBitmap
 import com.quxianggif.core.util.GlobalUtil
 import com.quxianggif.core.util.SharedUtil
+import com.quxianggif.event.MessageEvent
+import com.quxianggif.event.ModifyUserInfoEvent
+import com.quxianggif.feeds.ui.*
+import com.quxianggif.jetmain.common.ui.BaseJetPackFragment
 import com.quxianggif.jetmain.databinding.FragmentMainBinding
+import com.quxianggif.jetmain.extension.getColor
+import com.quxianggif.user.ui.ModifyUserInfoActivity
+import com.quxianggif.user.ui.UserHomePageActivity
+import com.quxianggif.util.AnimUtils
+import com.quxianggif.util.ColorUtils
+import com.quxianggif.util.UserUtil
+import com.quxianggif.util.glide.CustomUrl
+import jp.wasabeef.glide.transformations.BlurTransformation
+import jp.wasabeef.glide.transformations.CropCircleTransformation
+import kotlinx.android.synthetic.main.fragment_main.*
+import org.greenrobot.eventbus.Subscribe
+import org.greenrobot.eventbus.ThreadMode
+import org.litepal.LitePal
+import org.litepal.LitePalDB
 
 /**
  * Author   : zhangwenchao
  * Date     : 2019-11-26  15:49
  * Describe :
  */
-class MainFragment: BaseFragment() {
+class MainFragment: BaseJetPackFragment(), NavigationView.OnNavigationItemSelectedListener {
+
+    private lateinit var pagerAdapter: Adapter
+
+    private lateinit var nicknameMe: TextView
+
+    private lateinit var descriptionMe: TextView
+
+    private lateinit var avatarMe: ImageView
+
+    private lateinit var editImage: ImageView
+
+    private var backPressTime = 0L
+
+    private var currentPagerPosition = 0
 
     internal var isNeedToRefresh = false
+
+    private var navHeaderBgLoadListener: RequestListener<Any, GlideDrawable> = object : RequestListener<Any, GlideDrawable> {
+
+        override fun onException(e: Exception?, model: Any, target: Target<GlideDrawable>, isFirstResource: Boolean): Boolean {
+            return false
+        }
+
+        override fun onResourceReady(glideDrawable: GlideDrawable?, model: Any, target: Target<GlideDrawable>,
+                                     isFromMemoryCache: Boolean, isFirstResource: Boolean): Boolean {
+            if (glideDrawable == null) {
+                return false
+            }
+            val bitmap = glideDrawable.toBitmap()
+            val bitmapWidth = bitmap.width
+            val bitmapHeight = bitmap.height
+            if (bitmapWidth <= 0 || bitmapHeight <= 0) {
+                return false
+            }
+            val left = (bitmapWidth * 0.2).toInt()
+            val right = bitmapWidth - left
+            val top = bitmapHeight / 2
+            val bottom = bitmapHeight - 1
+            logDebug(TAG, "text area top $top , bottom $bottom , left $left , right $right")
+            Palette.from(bitmap)
+                    .maximumColorCount(3)
+                    .clearFilters()
+                    .setRegion(left, top, right, bottom) // 测量图片下半部分的颜色，以确定用户信息的颜色
+                    .generate { palette ->
+                        val isDark = ColorUtils.isBitmapDark(palette, bitmap)
+                        val color: Int
+                        color = if (isDark) {
+                            getColor(R.color.white_text)
+                        } else {
+                            getColor(R.color.primary_text)
+                        }
+                        nicknameMe.setTextColor(color)
+                        descriptionMe.setTextColor(color)
+                        editImage.setColorFilter(color, android.graphics.PorterDuff.Mode.MULTIPLY)
+                    }
+            return false
+        }
+    }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         checkIsNeedToRefresh()
+        initDatabase()
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val binding = FragmentMainBinding.inflate(inflater, container, false)
         return binding.root
+    }
+
+    override fun setupViews() {
+        super.setupViews()
+        setupToolbar()
+        setupViewPager(viewpager)
+        tabs.setupWithViewPager(viewpager)
+        tabs.addOnTabSelectedListener(tabSelectedListener)
+        composeFab.setOnClickListener {
+//            PostFeedActivity.actionStart(this)
+        }
+        navView.setNavigationItemSelectedListener(this)
+        popFab()
+        animateToolbar()
+        navView.viewTreeObserver.addOnPreDrawListener(object : ViewTreeObserver.OnPreDrawListener {
+            override fun onPreDraw(): Boolean {
+                navView.viewTreeObserver.removeOnPreDrawListener(this)
+                loadUserInfo()
+                return false
+            }
+        })
     }
 
     private fun checkIsNeedToRefresh() {
@@ -46,6 +163,215 @@ class MainFragment: BaseFragment() {
             }
         }
     }
+
+    private fun initDatabase() {
+        val litepalDB = LitePalDB.fromDefault("giffun_" + GifFun.getUserId().toString())
+        LitePal.use(litepalDB)
+    }
+
+    /**
+     * 加载登录用户的信息，头像和昵称等。
+     */
+    private fun loadUserInfo() {
+        val count = navView.headerCount
+        if (count == 1) {
+            val nickname = UserUtil.nickname
+            val avatar = UserUtil.avatar
+            val description = UserUtil.description
+            val bgImage = UserUtil.bgImage
+            val headerView = navView.getHeaderView(0)
+            val userLayout = headerView.findViewById<LinearLayout>(R.id.userLayout)
+            val descriptionLayout = headerView.findViewById<LinearLayout>(R.id.descriptionLayout)
+            val navHeaderBg = headerView.findViewById<ImageView>(R.id.navHeaderBgImage)
+            avatarMe = headerView.findViewById(R.id.avatarMe)
+            nicknameMe = headerView.findViewById(R.id.nicknameMe)
+            descriptionMe = headerView.findViewById(R.id.descriptionMe)
+            editImage = headerView.findViewById(R.id.editImage)
+
+            nicknameMe.text = nickname
+            if (TextUtils.isEmpty(description)) {
+                descriptionMe.text = GlobalUtil.getString(R.string.edit_description)
+            } else {
+                descriptionMe.text = String.format(GlobalUtil.getString(R.string.description_content), description)
+            }
+            Glide.with(this)
+                    .load(CustomUrl(avatar))
+                    .bitmapTransform(CropCircleTransformation(activity))
+                    .placeholder(R.drawable.loading_bg_circle)
+                    .error(R.drawable.avatar_default)
+                    .diskCacheStrategy(DiskCacheStrategy.SOURCE)
+                    .into(avatarMe)
+
+            if (TextUtils.isEmpty(bgImage)) {
+                if (!TextUtils.isEmpty(avatar)) {
+                    Glide.with(this)
+                            .load(CustomUrl(avatar))
+                            .bitmapTransform(BlurTransformation(activity, 15))
+                            .diskCacheStrategy(DiskCacheStrategy.SOURCE)
+                            .listener(navHeaderBgLoadListener)
+                            .into(navHeaderBg)
+                }
+            } else {
+                val bgImageWidth = navView.width
+                val bgImageHeight = dp2px((250 + 25).toFloat() /* 25为补偿系统状态栏高度，不加这个高度值图片顶部会出现状态栏的底色 */)
+                Glide.with(this)
+                        .load(bgImage)
+                        .diskCacheStrategy(DiskCacheStrategy.SOURCE)
+                        .override(bgImageWidth, bgImageHeight)
+                        .listener(navHeaderBgLoadListener)
+                        .into(navHeaderBg)
+            }
+//            userLayout.setOnClickListener { UserHomePageActivity.actionStart(this@MainActivity, avatarMe, GifFun.getUserId(), nickname, avatar, bgImage) }
+//            descriptionLayout.setOnClickListener { ModifyUserInfoActivity.actionEditDescription(this@MainActivity) }
+        }
+    }
+
+    private fun setupViewPager(viewPager: ViewPager) {
+        pagerAdapter = Adapter(childFragmentManager)
+//        pagerAdapter.addFragment(WorldFeedsFragment(), GlobalUtil.getString(R.string.world))
+//        pagerAdapter.addFragment(FollowingFeedsFragment(), GlobalUtil.getString(R.string.follow))
+//        pagerAdapter.addFragment(HotFeedsFragment(), GlobalUtil.getString(R.string.hot))
+        viewPager.adapter = pagerAdapter
+        viewPager.offscreenPageLimit = 2
+        currentPagerPosition = SharedUtil.read(Const.Feed.MAIN_PAGER_POSITION, 0)
+        if (currentPagerPosition < 0 || currentPagerPosition >= pagerAdapter.count) {
+            currentPagerPosition = 0
+        }
+        viewPager.currentItem = currentPagerPosition
+        viewPager.addOnPageChangeListener(object : ViewPager.OnPageChangeListener {
+            override fun onPageScrolled(position: Int, positionOffset: Float, positionOffsetPixels: Int) {}
+
+            override fun onPageSelected(position: Int) {
+                currentPagerPosition = position
+                executePendingRunnable()
+            }
+
+            override fun onPageScrollStateChanged(state: Int) {}
+        })
+    }
+
+    /**
+     * 使用pop动画的方式将fab按钮显示出来。
+     */
+    private fun popFab() {
+        composeFab.show()
+        composeFab.alpha = 0f
+        composeFab.scaleX = 0f
+        composeFab.scaleY = 0f
+        val animator = ObjectAnimator.ofPropertyValuesHolder(
+                composeFab,
+                PropertyValuesHolder.ofFloat(View.ALPHA, 1f),
+                PropertyValuesHolder.ofFloat(View.SCALE_X, 1f),
+                PropertyValuesHolder.ofFloat(View.SCALE_Y, 1f))
+        animator.startDelay = 200
+        animator.start()
+    }
+
+    /**
+     * 使用缩放动画的方式将Toolbar标题显示出来。
+     */
+    private fun animateToolbar() {
+        val t = toolbar?.getChildAt(0)
+        if (t != null && t is TextView) {
+            t.alpha = 0f
+            t.scaleX = 0.8f
+            t.animate()
+                    .alpha(1f)
+                    .scaleX(1f)
+                    .setStartDelay(300)
+                    .setDuration(900).interpolator = activity?.let { AnimUtils.getFastOutSlowInInterpolator(it) }
+        }
+    }
+
+    /**
+     * 执行Pending任务，用于同步ViewPager各面页签之间的状态。
+     */
+    private fun executePendingRunnable() {
+        val fragment = pagerAdapter.getItem(currentPagerPosition)
+        if (fragment is BaseFeedsFragment) {
+            fragment.executePendingRunnableList()
+        }
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    override fun onMessageEvent(messageEvent: MessageEvent) {
+        if (messageEvent is ModifyUserInfoEvent) {
+            if (messageEvent.modifyAvatar || messageEvent.modifyBgImage || messageEvent.modifyDescription || messageEvent.modifyNickname) {
+                loadUserInfo()
+            }
+        } else {
+            super.onMessageEvent(messageEvent)
+        }
+    }
+
+
+    override fun onNavigationItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.compose -> GifFun.getHandler().postDelayed(300){
+//                PostFeedActivity.actionStart(this)
+            }
+            R.id.user_home -> GifFun.getHandler().postDelayed(300) {
+//                UserHomePageActivity.actionStart(this, avatarMe, GifFun.getUserId(),
+//                        UserUtil.nickname, UserUtil.avatar, UserUtil.bgImage)
+            }
+            R.id.draft -> GifFun.getHandler().postDelayed(300) {
+//                DraftActivity.actionStart(this)
+            }
+            R.id.recommend_following -> GifFun.getHandler().postDelayed(300) {
+//                RecommendFollowingActivity.actionStart(this)
+            }
+            R.id.settings -> GifFun.getHandler().postDelayed(300) {
+//                SettingsActivity.actionStart(this)
+            }
+        }
+        GifFun.getHandler().post {
+            uncheckNavigationItems()
+            drawerLayout.closeDrawers()
+        }
+        return true
+    }
+
+    private fun uncheckNavigationItems() {
+        navView.setCheckedItem(R.id.none)
+    }
+
+    internal class Adapter(fm: FragmentManager) : FragmentPagerAdapter(fm) {
+        private val mFragments = ArrayList<Fragment>()
+        private val mFragmentTitles = ArrayList<String>()
+
+        fun addFragment(fragment: Fragment, title: String) {
+            mFragments.add(fragment)
+            mFragmentTitles.add(title)
+        }
+
+        override fun getItem(position: Int): Fragment {
+            return mFragments[position]
+        }
+
+        override fun getCount(): Int {
+            return mFragments.size
+        }
+
+        override fun getPageTitle(position: Int): CharSequence? {
+            return mFragmentTitles[position]
+        }
+    }
+
+    private val tabSelectedListener by lazy {
+        object : TabLayout.ViewPagerOnTabSelectedListener(viewpager) {
+            override fun onTabReselected(tab: TabLayout.Tab?) {
+                super.onTabReselected(tab)
+                if (tab != null) {
+                    val fragment = pagerAdapter.getItem(tab.position)
+                    if (fragment is BaseFeedsFragment) {
+                        fragment.scrollToTop()
+                    }
+                }
+                println("on tab onTabReselected ${tab?.position}")
+            }
+        }
+    }
+
 
     companion object {
 
